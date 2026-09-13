@@ -8,9 +8,12 @@ DEFAULT_EXCLUDED_DIRECTORIES = [
     "ProgramData"
 ]
 
-def load_excluded_directories(config: Path) -> list[str]:
+def load_excluded_directories(config: Path) -> set[str]:
     if not config.exists():
-        return DEFAULT_EXCLUDED_DIRECTORIES.copy()
+        return {
+            name.casefold()
+            for name in DEFAULT_EXCLUDED_DIRECTORIES
+        }
     with config.open("r", encoding="utf-8") as f:
         data = json.load(f)
 

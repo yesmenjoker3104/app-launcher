@@ -58,17 +58,13 @@ Excel、Word、個別のExeなどを追加するたびに`plugin.json`を編集�
 
 登録情報は`app-launcher`独自のファイルで管理する。
 
-開発中はプロジェクト内の`data/apps.json`を使ってよいが、実運用ではユーザーごとのデータ領域へ保存する。
+登録DBは、カレントディレクトリに依存せず、app-launcherの配置場所を基準に保存する。
 
-```text
-%LOCALAPPDATA%\app-launcher\apps.json
-```
+- ソース実行時: `app-launcher/data/apps.json`
+- Exe実行時: `AppLauncherCli.exe`と同じ場所の`data/apps.json`
+- assist-chatから利用時: `assist-chat/plugin/AppLauncher/data/apps.json`
 
-保存先は環境変数やCLIオプションで上書きできるようにする。実行時に変更される`apps.json`は、ソースコードと同じ場所に固定しない。
-
-```text
-app-launcher/data/apps.json
-```
+実行時に変更される`apps.json`は、実行ファイルの配置先にある`data`フォルダへ保存する。
 
 登録例:
 

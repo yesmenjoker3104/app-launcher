@@ -3,10 +3,12 @@ import json
 import sys
 from pathlib import Path
 
-from .discovery import scan_directory
+from .discovery import find_application, scan_directory
+from .config import load_excluded_directories
 from .errors import AppLauncherError
 from .models import App, AppRegistry
 from .registry import RegistryStore
+from .launcher import launch_application, open_with_application
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -41,6 +43,23 @@ def build_parser() -> argparse.ArgumentParser:
     )
     remove_parser.add_argument("path", type=str, help="Name of the application to remove")
 
+    open_parser = subparsers.add_parser(
+        "open",
+        help="Open or launch a registered application",
+    )
+    open_parser.add_argument(
+        "file",
+        nargs="?",
+        type=Path,
+        help="Optional file path to open",
+    )
+    open_parser.add_argument(
+        "--application",
+        type=str,
+        required=True,
+        help="Registered application name or alias",
+    )
+
     return parser
 
 
@@ -53,6 +72,22 @@ def load_registry(store: RegistryStore) -> AppRegistry:
     if registry is None:
         return AppRegistry()
     return registry
+
+
+def data_directory() -> Path:
+    if getattr(sys, "frozen", False):
+        base_dir = Path(sys.executable).resolve().parent
+    else:
+        base_dir = Path(__file__).resolve().parents[2]
+    return base_dir / "data"
+
+
+def registry_path() -> Path:
+    return data_directory() / "apps.json"
+
+
+def config_path() -> Path:
+    return data_directory() / "config.json"
 
 
 def handle_register(
@@ -94,7 +129,8 @@ def handle_scan(
     apps = scan_directory(
         args.directory,
         recursive=args.recursive,
-        )
+        excluded_directories=load_excluded_directories(config_path()),
+    )
     added_count = 0
     for app in apps:
         if store.add(registry, app):
@@ -155,10 +191,56 @@ def handle_remove(
     })
     return 0
 
+def handle_open(
+    args: argparse.Namespace,
+    store: RegistryStore,
+) -> int:
+    try:
+        registry = load_registry(store)
+        app = find_application(registry, args.application)
+
+        if app is None:
+            output_json({
+                "ok": False,
+                "error": (
+                    f"登録されているアプリが見つかりません: "
+                    f"{args.application}"
+                ),
+            })
+            return 1
+
+        application_path = Path(app.path)
+
+        result = {
+            "ok": True,
+            "application": app.name,
+        }
+
+        if args.file is None:
+            launch_application(application_path)
+            result["action"] = "app_launch"
+        else:
+            open_with_application(
+                file_path=args.file,
+                application_path=application_path,
+            )
+            result["action"] = "app_open"
+            result["file"] = str(args.file)
+
+        output_json(result)
+        return 0
+
+    except FileNotFoundError as error:
+        output_json({
+            "ok": False,
+            "error": str(error),
+        })
+        return 1
+
 def main() -> int:
     parser = build_parser()
     args = parser.parse_args()
-    store = RegistryStore("data/apps.json")
+    store = RegistryStore(registry_path())
 
     try:
         if args.command == "register":
@@ -169,6 +251,8 @@ def main() -> int:
             return handle_list(store)
         if args.command == "remove":
             return handle_remove(args, store)
+        if args.command == "open":
+            return handle_open(args, store)
 
         parser.print_help()
         return 1

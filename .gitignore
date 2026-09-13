@@ -9,3 +9,5 @@ build/
 dist/
 .DS_Store
 Thumbs.db
+data/apps.json
+AppLauncherCli.spec

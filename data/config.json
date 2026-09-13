@@ -1,0 +1,8 @@
+{
+    "excluded_directories": [
+        "Windows",
+        "Program Files",
+        "Program Files (x86)",
+        "ProgramData"
+    ]
+}

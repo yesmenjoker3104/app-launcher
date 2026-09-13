@@ -1,0 +1,22 @@
+{
+  "apps": [
+    {
+      "name": "vlc-cache-gen",
+      "path": "C:\\Users\\SatoshiｰOotomo\\OneDrive - SatoshiOhtomo\\04_PC関連\\01_my_pro\\vlc\\vlc-cache-gen.exe",
+      "aliases": [
+        "vlc-cache-gen"
+      ],
+      "enabled": true,
+      "source": "scanned"
+    },
+    {
+      "name": "vlc",
+      "path": "C:\\Users\\SatoshiｰOotomo\\OneDrive - SatoshiOhtomo\\04_PC関連\\01_my_pro\\vlc\\vlc.exe",
+      "aliases": [
+        "vlc"
+      ],
+      "enabled": true,
+      "source": "scanned"
+    }
+  ]
+}

@@ -64,7 +64,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def output_json(data: dict) -> None:
-    print(json.dumps(data, ensure_ascii=False))
+    print(json.dumps(data, ensure_ascii=True))
 
 
 def load_registry(store: RegistryStore) -> AppRegistry:

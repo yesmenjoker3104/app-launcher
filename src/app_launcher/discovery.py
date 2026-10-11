@@ -21,7 +21,7 @@ def scan_directory(
             continue
         if path.suffix.casefold() != ".exe":
             continue
-        if is_excluded_path(path, excluded_names):
+        if is_excluded_path(path, directory, excluded_names):
             continue
 
         apps.append(App(
@@ -56,9 +56,12 @@ def find_application(
 
 def is_excluded_path(
     path: Path,
+    root: Path,
     excluded_directories: set[str],
 ) -> bool:
+    # スキャン元より上の親フォルダ名（例: Program Files）では除外しない
+    relative_dirs = path.relative_to(root).parts[:-1]
     return any(
         part.casefold() in excluded_directories
-        for part in path.parts
+        for part in relative_dirs
     )

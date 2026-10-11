@@ -25,30 +25,20 @@ try{
     --console `
     --clean `
     --noconfirm `
-    --name AppLauncherCli `
+    --name app-launcher `
     --paths "$Root\src" `
-    --distpath "$Root\dist" `
-    --workpath "$Root\build\AppLauncherCli" `
+    --distpath "$Root\dist\app-launcher" `
+    --workpath "$Root\build\app-launcher" `
+    --specpath "$Root\build" `
     "$Root\cli_entry.py"
 }
 finally{
     pop-location
 }
 
-$Exe = join-path $Root "dist\AppLauncherCli.exe"
+$Exe = join-path $Root "dist\app-launcher\app-launcher.exe"
 if (-not (test-path $Exe)) {
     throw "Build failed: $Exe not found."
-}
-
-$DataTargetDir = join-path $Root "dist\data"
-$DataFiles = @("apps.json", "config.json")
-foreach ($DataFile in $DataFiles) {
-    $DataSource = join-path $Root "data\$DataFile"
-    if (test-path $DataSource) {
-        new-item -ItemType Directory -Force $DataTargetDir | out-null
-        copy-item $DataSource (join-path $DataTargetDir $DataFile) -Force
-        write-host "Copied data: $DataTargetDir\$DataFile"
-    }
 }
 
 write-host "Build succeeded: $Exe"

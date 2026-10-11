@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "app-launcher"
+dynamic = ["version"]
+description = "Windows application launcher CLI"
+requires-python = ">=3.12"
+
+[project.scripts]
+app-launcher = "app_launcher.cli:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "app_launcher.__version__"}
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

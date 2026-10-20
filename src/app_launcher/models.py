@@ -11,6 +11,17 @@ class App:
     aliases: list[str] = field(default_factory=list)  # エイリアス（例: ["excel", "xls"]）
     enabled: bool = True         # 有効・無効状態
     source: Literal["manual", "scanned"] = "manual"  # 登録元
+    source_path: str | None = None  # スキャン元フォルダ（scanned のみ）
+    show_in_list: bool = True    # 一覧に表示するか
+
+
+@dataclass
+class SourceFolder:
+    """
+    スキャン元フォルダ
+    """
+    path: str
+    recursive: bool = False
 
 
 @dataclass
@@ -19,6 +30,7 @@ class AppRegistry:
     登録済みアプリ一覧（apps.json全体）
     """
     apps: list[App] = field(default_factory=list)
+    sources: list[SourceFolder] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         """辞書形式に変換（JSON保存用）"""
@@ -30,9 +42,18 @@ class AppRegistry:
                     "aliases": app.aliases,
                     "enabled": app.enabled,
                     "source": app.source,
+                    "source_path": app.source_path,
+                    "show_in_list": app.show_in_list,
                 }
                 for app in self.apps
-            ]
+            ],
+            "sources": [
+                {
+                    "path": source.path,
+                    "recursive": source.recursive,
+                }
+                for source in self.sources
+            ],
         }
 
     @classmethod
@@ -45,7 +66,16 @@ class AppRegistry:
                 aliases=app_data.get("aliases", []),
                 enabled=app_data.get("enabled", True),
                 source=app_data.get("source", "manual"),
+                source_path=app_data.get("source_path"),
+                show_in_list=app_data.get("show_in_list", True),
             )
             for app_data in data.get("apps", [])
         ]
-        return cls(apps=apps)
+        sources = [
+            SourceFolder(
+                path=source_data["path"],
+                recursive=source_data.get("recursive", False),
+            )
+            for source_data in data.get("sources", [])
+        ]
+        return cls(apps=apps, sources=sources)

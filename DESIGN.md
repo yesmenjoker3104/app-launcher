@@ -49,7 +49,9 @@
 - `app_open`
 - `app_register`
 - `app_scan`
+- `app_unscan`
 - `app_list`
+- `app_update`
 - 必要に応じて`app_remove`
 
 Excel、Word、個別のExeなどを追加するたびに`plugin.json`を編集する必要はない。
@@ -58,13 +60,10 @@ Excel、Word、個別のExeなどを追加するたびに`plugin.json`を編集�
 
 登録情報は`app-launcher`独自のファイルで管理する。
 
-登録DBは、カレントディレクトリに依存せず、app-launcherの配置場所を基準に保存する。
+登録DBは、カレントディレクトリや実行ファイルの配置場所に依存せず、ユーザーごとの領域に保存する。
 
-- ソース実行時: `app-launcher/data/apps.json`
-- Exe実行時: `AppLauncherCli.exe`と同じ場所の`data/apps.json`
-- assist-chatから利用時: `assist-chat/plugin/AppLauncher/data/apps.json`
-
-実行時に変更される`apps.json`は、実行ファイルの配置先にある`data`フォルダへ保存する。
+- 保存先: `%LOCALAPPDATA%\app-launcher\apps.json`
+- 旧版の`data/apps.json`（実行ファイルの隣）が存在し、新しい保存先がまだ無い場合は、初回起動時に一度だけコピーする。旧ファイルは削除しない。
 
 登録例:
 
@@ -112,6 +111,30 @@ app-launcher scan "D:\Tools" --recursive
 - 登録候補を一覧表示できるようにする
 - スキャンしただけではアプリを実行しない
 - 必要なら登録前にユーザー確認を行う
+
+### 登録フォルダ（sources）
+
+スキャンしたフォルダは`sources`として`apps.json`に記録し、各アプリには`source_path`を持たせる。
+
+- 再スキャンすると、そのフォルダ由来のアプリだけを追加・削除する。手動登録（`source: "manual"`）は変更しない。
+- 再帰スキャンで親フォルダを登録すると、既存の子フォルダ登録は親へ吸収される。吸収されたアプリのエイリアスと表示設定は残す。
+- 再帰扱いの登録フォルダ配下に別のフォルダを追加した場合は、別登録せず親を再スキャンする（`covered_by`で返す）。
+
+```text
+app-launcher unscan "D:\Tools"
+```
+
+`unscan`は、そのフォルダ由来のアプリをすべて削除し、登録フォルダからも外す。
+
+### アプリ情報の更新
+
+```text
+app-launcher update "D:\Tools\MyApp\MyApp.exe" --name "表示名" --aliases "a,b" --hide-from-list
+```
+
+- `--aliases ""`でエイリアスを全て消す。
+- `--show-in-list`／`--hide-from-list`で一覧表示の有無を切り替える。
+- 別のアプリと同じパスへ変更することはできない。
 
 ## アプリ検索
 
@@ -241,7 +264,7 @@ app-launcher/
 │   ├── test_discovery.py
 │   └── test_cli.py
 └── data/
-  └── apps.json             # 開発用。実運用ではLocalAppDataへ保存
+  └── config.json           # 配布時の設定（apps.jsonは%LOCALAPPDATA%へ保存）
 ```
 
 `src`レイアウトを採用し、インストール後のパッケージを実際にimportしてテストできるようにする。`pyproject.toml`の`project.scripts`から`app_launcher.cli:main`を起動する。
@@ -300,9 +323,11 @@ AppEntry(
 ```text
 app-launcher register "D:\Tools\MyApp\MyApp.exe" --name "MyApp"
 app-launcher scan "D:\Tools" --recursive
+app-launcher unscan "D:\Tools"
 app-launcher list
+app-launcher update "D:\Tools\MyApp\MyApp.exe" --name "MyApp" --aliases "myapp"
 app-launcher remove "MyApp"
-app-launcher open "D:\資料\sample.xlsx" --application "Excel"
+app-launcher open "D:\資料\sample.xlsx" "D:\資料\memo.txt" --application "Excel"
 ```
 
 CLIは次の処理を直接実装せず、各モジュールへ委譲する。
@@ -316,8 +341,8 @@ CLIは次の処理を直接実装せず、各モジュールへ委譲する。
 次のデータを混在させない。
 
 - `pyproject.toml`: 開発者が管理するプロジェクト設定
-- `data/apps.json`: アプリ登録情報
-- `%LOCALAPPDATA%\app-launcher\`: ユーザーごとの実行時データ
+- `data/config.json`: 配布時の設定
+- `%LOCALAPPDATA%\app-launcher\apps.json`: アプリ登録情報（実行時）
 - `tests/`: テストコード
 
 `apps.json`が壊れていた場合は、既存ファイルを上書きせずエラーJSONを返す。保存時は一時ファイルを使って破損を避ける。
